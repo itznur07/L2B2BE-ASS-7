@@ -26,14 +26,17 @@ async function run() {
     console.log("Connected to MongoDB");
 
     const db = client.db("aidnest");
-    const collection = db.collection("users");
+
+    // Collections
+    const users = db.collection("users");
+    const relifGoods = db.collection("reliefGoods");
 
     // User Registration
     app.post("/api/auth/register", async (req, res) => {
       const { name, email, password } = req.body;
 
       // Check if email already exists
-      const existingUser = await collection.findOne({ email });
+      const existingUser = await users.findOne({ email });
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -45,7 +48,7 @@ async function run() {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Insert user into the database
-      await collection.insertOne({ name, email, password: hashedPassword });
+      await users.insertOne({ name, email, password: hashedPassword });
 
       res.status(201).json({
         success: true,
@@ -58,7 +61,7 @@ async function run() {
       const { email, password } = req.body;
 
       // Find user by email
-      const user = await collection.findOne({ email });
+      const user = await users.findOne({ email });
       if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
@@ -82,7 +85,18 @@ async function run() {
     });
 
     // ==============================================================
-    // WRITE YOUR CODE HERE
+
+    // Retrieve relif goods data
+    app.get("/api/reliefGoods", async (req, res) => {
+      const reliefGoods = await relifGoods.find({}).toArray();
+
+      res.json({
+        success: true,
+        message: "Relief goods data retrieved successfully",
+        data: reliefGoods,
+      });
+    });
+
     // ==============================================================
 
     // Start the server
