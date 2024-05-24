@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
@@ -86,15 +86,51 @@ async function run() {
 
     // ==============================================================
 
-    // Retrieve relif goods data
+    // Retrieve relief goods data
     app.get("/api/reliefGoods", async (req, res) => {
-      const reliefGoods = await relifGoods.find({}).toArray();
+      const reliefGoods = await relifGoods.find().toArray();
 
-      res.json({
+      return res.json({
         success: true,
         message: "Relief goods data retrieved successfully",
         data: reliefGoods,
       });
+    });
+
+    // retrieve single relief goods data
+    app.get("/api/reliefGoods/:id", async (req, res) => {
+      const { id } = req.params;
+
+      // Validate ObjectId
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid ID format",
+        });
+      }
+
+      try {
+        const reliefGood = await relifGoods.findOne({ _id: new ObjectId(id) });
+
+        if (!reliefGood) {
+          return res.status(404).json({
+            success: false,
+            message: "Relief goods item not found",
+          });
+        }
+
+        return res.json({
+          success: true,
+          message: "Relief goods item retrieved successfully",
+          data: reliefGood,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "An error occurred while retrieving the relief goods item",
+          error: error.message,
+        });
+      }
     });
 
     // ==============================================================
